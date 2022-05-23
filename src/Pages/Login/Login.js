@@ -6,7 +6,8 @@ import {
 import auth from "../../firebase.init";
 import { useForm } from "react-hook-form";
 import Loading from "../Shared/Loading";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import useToken from "../../hooks/useToken";
 
 const Login = () => {
   const [signInWithGoogle, gUser, gLoading, gError] = useSignInWithGoogle(auth);
@@ -15,32 +16,32 @@ const Login = () => {
     formState: { errors },
     handleSubmit,
   } = useForm();
-
   const [signInWithEmailAndPassword, user, loading, error] =
     useSignInWithEmailAndPassword(auth);
 
-  const location = useLocation();
+  const [token] = useToken(user || gUser);
+
+  let signInError;
   const navigate = useNavigate();
+  const location = useLocation();
   let from = location.state?.from?.pathname || "/";
 
   useEffect(() => {
-    if (user || gUser) {
+    if (token) {
       navigate(from, { replace: true });
     }
-  }, [user, gUser, navigate, from]);
-
-  let signInError;
-
-  if (error || gError) {
-    signInError = (
-      <p className="text-red-600">
-        <small>{error?.message || gError?.message}</small>
-      </p>
-    );
-  }
+  }, [token, from, navigate]);
 
   if (loading || gLoading) {
     return <Loading></Loading>;
+  }
+
+  if (error || gError) {
+    signInError = (
+      <p className="text-red-500">
+        <small>{error?.message || gError?.message}</small>
+      </p>
+    );
   }
 
   const onSubmit = (data) => {
@@ -48,10 +49,10 @@ const Login = () => {
   };
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex h-screen justify-center items-center">
       <div className="card w-96 bg-base-100 shadow-xl">
         <div className="card-body">
-          <h2 className="text-2xl text-center font-bold">LOG IN</h2>
+          <h2 className="text-center text-2xl font-bold">Login</h2>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="form-control w-full max-w-xs">
               <label className="label">
@@ -64,22 +65,22 @@ const Login = () => {
                 {...register("email", {
                   required: {
                     value: true,
-                    message: "Email is required",
+                    message: "Email is Required",
                   },
                   pattern: {
                     value: /[a-z0-9]+@[a-z]+\.[a-z]{2,3}/,
-                    message: "Provide a valid email address",
+                    message: "Provide a valid Email",
                   },
                 })}
               />
               <label className="label">
                 {errors.email?.type === "required" && (
-                  <span className="label-text-alt text-red-600">
+                  <span className="label-text-alt text-red-500">
                     {errors.email.message}
                   </span>
                 )}
                 {errors.email?.type === "pattern" && (
-                  <span className="label-text-alt text-red-600">
+                  <span className="label-text-alt text-red-500">
                     {errors.email.message}
                   </span>
                 )}
@@ -96,50 +97,49 @@ const Login = () => {
                 {...register("password", {
                   required: {
                     value: true,
-                    message: "Password is required",
+                    message: "Password is Required",
                   },
                   minLength: {
                     value: 6,
-                    message: "Password should be 6 characters long",
+                    message: "Must be 6 characters or longer",
                   },
                 })}
               />
               <label className="label">
                 {errors.password?.type === "required" && (
-                  <span className="label-text-alt text-red-600">
+                  <span className="label-text-alt text-red-500">
                     {errors.password.message}
                   </span>
                 )}
                 {errors.password?.type === "minLength" && (
-                  <span className="label-text-alt text-red-600">
+                  <span className="label-text-alt text-red-500">
                     {errors.password.message}
                   </span>
                 )}
               </label>
             </div>
+
             {signInError}
             <input
-              className="btn w-full max-w-xs mt-2"
+              className="btn w-full max-w-xs text-white"
               type="submit"
               value="Login"
             />
           </form>
-
-          <p className="text-center">
+          <p>
             <small>
-              New to Doctors Portal?{" "}
-              <Link to="/signup" className="text-primary">
-                Create an account
+              New to Doctors Portal{" "}
+              <Link className="text-primary" to="/signup">
+                Create New Account
               </Link>
             </small>
           </p>
-
           <div className="divider">OR</div>
           <button
             onClick={() => signInWithGoogle()}
             className="btn btn-outline"
           >
-            Google Sign In
+            Continue with Google
           </button>
         </div>
       </div>
