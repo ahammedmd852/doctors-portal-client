@@ -9,65 +9,67 @@ const AddDoctor = () => {
     register,
     formState: { errors },
     handleSubmit,
-    reset
+    reset,
   } = useForm();
 
-  const { data: services, isLoading } = useQuery(
-    "services",
-    () => fetch("http://localhost:5000/service").then((res) => res.json())
+  const { data: services, isLoading } = useQuery("services", () =>
+    fetch("http://localhost:5000/service").then((res) => res.json())
   );
 
+  const imageStorageKey = "4295ac4d47b569312bea67b440cdbdbb";
 
-  if (isLoading) {
-    return <Loading></Loading>;
-  }
-
-  const imageStoreKey = '8324f57748fc2c9246e0bb7d4642233a';
-
+  /**
+   * 3 ways to store images
+   * 1. Third party storage //Free open public storage is ok for Practice project
+   * 2. Your own storage in your own server (file system)
+   * 3. Database: Mongodb
+   *
+   * YUP: to validate file: Search: Yup file validation for react hook form
+   */
   const onSubmit = async (data) => {
     const image = data.image[0];
     const formData = new FormData();
-    formData.append('image', image);
-    const url = `https://api.imgbb.com/1/upload?key=${imageStoreKey}`;
-    fetch( url, {
-        method: 'POST',
-        body: formData
+    formData.append("image", image);
+    const url = `https://api.imgbb.com/1/upload?key=${imageStorageKey}`;
+    fetch(url, {
+      method: "POST",
+      body: formData,
     })
-    .then(res => res.json())
-    .then(result => {
-        if(result.success) {
-            const img = result.data.url;
-            const doctor = {
-                name: data.name,
-                email: data.email,
-                specialty: data.specialty,
-                img: img
-            }
-             // send to your database 
-            fetch('http://localhost:5000/doctor', {
-                method: 'POST',
-                headers: {
-                    'content-type': 'application/json',
-                    authorization: `Bearer ${localStorage.getItem('accessToken')}`
-                },
-                body: JSON.stringify(doctor)
-            })
-            .then(res => res.json())
-            .then(inserted => {
-                if(inserted.insertedId){
-                    toast.success('Successfully added the doctor');
-                    reset();
-                }
-                else{
-                    toast.error('Fail to add the doctor');
-                }
-            })
+      .then((res) => res.json())
+      .then((result) => {
+        if (result.success) {
+          const img = result.data.url;
+          const doctor = {
+            name: data.name,
+            email: data.email,
+            specialty: data.specialty,
+            img: img,
+          };
+          // send to your database
+          fetch("http://localhost:5000/doctor", {
+            method: "POST",
+            headers: {
+              "content-type": "application/json",
+              authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            },
+            body: JSON.stringify(doctor),
+          })
+            .then((res) => res.json())
+            .then((inserted) => {
+              if (inserted.insertedId) {
+                toast.success("Doctor added successfully");
+                reset();
+              } else {
+                toast.error("Failed to add the doctor");
+              }
+            });
         }
-        console.log(result.data);
-    })
+      });
   };
 
- 
+  if (isLoading) {
+    return <Loading></Loading>;
+  };
 
   return (
     <div>
@@ -134,38 +136,39 @@ const AddDoctor = () => {
           <label className="label">
             <span className="label-text">Specialty</span>
           </label>
-          <select {...register("specialty")} className="select input-bordered w-full max-w-xs">
-            {
-            services?.map(service => 
-              <option key={service._id} 
-              value={service.name}>
+          <select
+            {...register("specialty")}
+            className="select input-bordered w-full max-w-xs"
+          >
+            {services?.map((service) => (
+              <option key={service._id} value={service.name}>
                 {service.name}
               </option>
-            )}
+            ))}
           </select>
 
           <div className="form-control w-full max-w-xs">
-          <label className="label">
-            <span className="label-text">Photo</span>
-          </label>
-          <input
-            type="file"
-            className="input input-bordered w-full max-w-xs"
-            {...register("image", {
-              required: {
-                value: true,
-                message: "Image is Required",
-              }
-            })}
-          />
-          <label className="label">
-            {errors.email?.type === "required" && (
-              <span className="label-text-alt text-red-500">
-                {errors.email.message}
-              </span>
-            )}
-          </label>
-        </div>
+            <label className="label">
+              <span className="label-text">Photo</span>
+            </label>
+            <input
+              type="file"
+              className="input input-bordered w-full max-w-xs"
+              {...register("image", {
+                required: {
+                  value: true,
+                  message: "Image is Required",
+                },
+              })}
+            />
+            <label className="label">
+              {errors.email?.type === "required" && (
+                <span className="label-text-alt text-red-500">
+                  {errors.email.message}
+                </span>
+              )}
+            </label>
+          </div>
 
           <input
             className="btn w-full max-w-xs text-white"
@@ -173,7 +176,6 @@ const AddDoctor = () => {
             value="ADD"
           />
         </div>
-
       </form>
     </div>
   );
