@@ -34,7 +34,7 @@ const ManageDoctors = () => {
                     <tbody>
                         {
                             doctors.map((doctor, index) => <DoctorRow
-                                key={doctor._key}
+                                key={doctor._id}
                                 doctor={doctor}
                                 index={index}
                                 refetch={refetch}
